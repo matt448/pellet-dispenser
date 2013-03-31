@@ -1,0 +1,2 @@
+#This file needs to go in /etc/udev/rules.d/75-dymoscale.rules
+ATTRS{idVendor}=="0922", ATTRS{idProduct}=="8003", MODE="0666", OWNER="pi", GROUP="root"
