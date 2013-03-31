@@ -10,6 +10,9 @@
 
 #define EV_NUM 5
 
+// I found this code here: http://ubuntuforums.org/archive/index.php/t-2044904.html
+// It was written by whoever is CrusaderAD on that forum
+//
 // TO COMPILE: cc -o readscale readscale.c -lusb -lhid
 // Requires libusb and libhid
 
