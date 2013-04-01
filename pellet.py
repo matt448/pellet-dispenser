@@ -52,6 +52,12 @@ def read_scale(devicefile):
     output = Decimal(output).quantize(oneplace)
     return output
 
+def solenoid_control(action,pin):
+    print 'solenoid_control - pin: ' + str(pin) + ' action: ' + str(action)
+    if action == 'deactivate': mb.pinLow(pin)
+    elif action == 'activate': mb.pinHigh(pin)
+    else: mb.pinLow(pin) #Not sure what you want but closing to prevent spill 
+
 #Variables
 oneplace = Decimal('0.0') #Decimal precision for weights
 scaleweight = Decimal('0.0')
@@ -66,7 +72,7 @@ mb.lcd()               # Initialize the LCD
 mb.pinLow(1)           # Make sure LED's are turned off
 mb.pinLow(2)
 
-#Set digital pins to input for buttons
+#Set digital pins to input mode for reading button presses
 mb.digitalState(12, 'input')
 
 time.sleep(0.5)          # Wait for LCD to Initialize
@@ -91,8 +97,8 @@ blanklcdline(2)
 blanklcdline(3)
 blanklcdline(4)
 
+solenoid_control('activate',11)
 while Decimal(scaleweight) < Decimal(stopweight):
-    #scaleweight = (readscale(scaleweight))
     scaleweight = read_scale(scaledev)
     print "SCALE WEIGHT: " + str(scaleweight)
     print " STOP WEIGHT: " + str(stopweight)
@@ -100,7 +106,8 @@ while Decimal(scaleweight) < Decimal(stopweight):
     mb.lcd(3,'SCALE: ' + str(scaleweight) + 'oz')
     mb.lcd(4,' STOP: ' + str(stopweight) + 'oz')
     time.sleep(0.25)
-mb.pinHigh(1)
+solenoid_control('deactivate',11)
+mb.pinHigh(1) #Turn on LED light to signal finished
 mb.lcd(2,'   --  FULL   --   ')
 
 
