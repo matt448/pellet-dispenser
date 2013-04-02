@@ -19,10 +19,10 @@ def blanklcd():
 def blanklcdline(line):
     mb.lcd(line,'                    ')   #Blank one line on the display
         
-def readscale(val):
+#def readscale(val):
     # This is a fake scale reading that keeps increasing in 0.1 ounce increments
-    val += Decimal('0.1')
-    return val
+    #val += Decimal('0.1')
+    #return val
 
 def waitforbutton(pin,label):
     ### Loop waits for start button to be pressed.
@@ -75,6 +75,28 @@ def solenoid_control(action,pin):
     elif action == 'activate': mb.pinHigh(pin)
     else: mb.pinLow(pin) #Not sure what you want but closing to prevent spill 
 
+def wait_for_zero_scale():
+    while True:
+        scaleweight = read_scale(scaledev)
+        if scaleweight == Decimal(0.0):
+            break
+        else:
+            blanklcdline(2)
+            blanklcdline(3)
+            blanklcdline(4)
+            mb.lcd(2,' Scale not at 0.0oz ')
+            mb.lcd(3,'Take item from scale')
+            mb.lcd(4,'or press TARE button')
+            sleep(1)
+    #Scale is now zero. Printing msg to LCD.
+    blanklcdline(2)
+    blanklcdline(3)
+    blanklcdline(4)
+    mb.lcd(3,'    SCALE READY  ')
+    sleep(2)
+    return
+
+
 #Variables
 mb = pymcu.mcuModule() # Initialize pymcu board - Find first available pymcu hardware module.
 mb.digitalState(12, 'input') #Set digital pins to input mode for reading button presses
@@ -102,6 +124,9 @@ print 'Scale device file: >' + scaledev + '<'
 # First read of scale returns 0.1oz for some reason
 # Adding an extra first read to account for that
 scaleweight = read_scale(scaledev)
+
+
+wait_for_zero_scale()
 
 # Do initial read of scale
 scaleweight = read_scale(scaledev)
