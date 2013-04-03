@@ -97,7 +97,7 @@ def wait_for_zero_scale():
     return
 
 
-#Variables
+#Initialize the pymcu board, LCD and digital pins for buttons
 mb = pymcu.mcuModule() # Initialize pymcu board - Find first available pymcu hardware module.
 mb.digitalState(12, 'input') #Set digital pins to input mode for reading button presses
 mb.lcd()               # Initialize the LCD
