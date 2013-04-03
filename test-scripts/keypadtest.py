@@ -8,10 +8,15 @@
 # Matthew McMillan
 # matthew.mcmillan@silvercar.com
 #
+# Thanks to Adam Levy for helping me with the key_pad nested dictionary
+# 
+#
 
 import pymcu           # Import the pymcu module
 import time            # Import time module for sleep functions
 from time import sleep
+
+key_map = {   9:{ 5:1, 4:2, 3:3 },  8:{ 5:4, 4:5, 3:6 },  7:{ 5:7, 4:8, 3:9 },  6:{ 5:"*", 4:0, 3:"#" }   }
 
 inputpins = [6,7,8,9]
 outputpins = [3,4,5]
@@ -30,25 +35,19 @@ for pin in outputpins:
     mb.pinHigh(pin)
 
 print ' '
-print 'Starting loop. Press ctrl-c to exit'
+print 'Starting loop to read keypad button presses.'
+print 'Press ctrl-c to exit'
 sleep(2)
-print ' '
+print 'Press buttons now. '
 
 while True:
     for ipin in inputpins:
         for opin in outputpins:
-            #print 'OPIN ' + str(opin) + ' GOING LOW'
             mb.pinLow(opin)
-            #print 'IPIN' + str(ipin) + ' OPIN' + str(opin) + ': '+ str(mb.digitalRead(ipin))
-            #print 'READING IPIN ' + str(ipin)
             if not mb.digitalRead(ipin):
-                print 'IPIN:' + str(ipin) + ' OPIN:' + str(opin)
+                #print 'IPIN:' + str(ipin) + ' OPIN:' + str(opin)
+                print 'KEY PRESSED: ' + str(key_map[ipin][opin])
                 print '--------------------'
                 sleep(0.5) # Sleep a little extra to avoid double presses
-                #print 'IPIN: ' + str(ipin) 
-                #print 'OPIN: ' + str(opin)
-                #print ' '
-                #sleep(1)
-            #print 'OPIN ' + str(opin) + ' GOING HIGH'
             mb.pinHigh(opin)
     time.sleep(0.05)
