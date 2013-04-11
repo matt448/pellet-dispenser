@@ -18,21 +18,73 @@ def blanklcd():
  
 def blanklcdline(line):
     mb.lcd(line,'                    ')   #Blank one line on the display
-        
-#def readscale(val):
-    # This is a fake scale reading that keeps increasing in 0.1 ounce increments
-    #val += Decimal('0.1')
-    #return val
 
 def waitforbutton(pin,label):
     ### Loop waits for start button to be pressed.
     print 'Press ' + str(label)
-    mb.lcd(3,'    Press ' + label)
+    blanklcdline(4)
+    mb.lcd(4,'    Press ' + label)
     while True:
         if not mb.digitalRead(pin):
             time.sleep(0.05)
         else:
             break
+
+def read_keypad():
+    keys = []
+    key = ""
+    maxkeys = 0
+    #Set input pins to input mode
+    for pin in inputpins:
+        mb.digitalState(pin, 'input')
+    #Set output pins to output mode
+    for pin in outputpins:
+        mb.digitalState(pin, 'output')
+        mb.pinHigh(pin)
+    while True:
+        for ipin in inputpins:
+            for opin in outputpins:
+                mb.pinLow(opin)
+                if not mb.digitalRead(ipin): # This means a key was pressed
+                    key = str(key_map[ipin][opin])
+                    print 'KEY PRESSED: ' + str(key_map[ipin][opin])
+                    if key == '#':
+                        print '# key pressed. Exiting key reading loop'
+                        break
+                    elif key == '.':
+                        if maxkeys == 0: #This prevents multiple decimal points
+                            keys.append(str(key))
+                            maxkeys = len(keys) + 1
+                            dispval = ""
+                            for i in keys:
+                                dispval = dispval + i
+                            mb.lcd(3,'Enter weight: ' + str(dispval))
+                        else:
+                            print 'Not allowing extra decimal points.'
+                            mb.lcd(4,'       ERROR')
+                        print 'User entered decimal point. Only allowing one more char.'
+                        print 'maxkeys: ' + str(maxkeys)
+                    else:
+                        if (maxkeys == 0) or (len(keys) < maxkeys):
+                            keys.append(str(key))
+                        else:
+                            print 'Not allowing any more characters'
+                            mb.lcd(4,'       ERROR')
+                        dispval = ""
+                        for i in keys:
+                            dispval = dispval + i
+                        mb.lcd(3,'Enter weight: ' + str(dispval))
+                    sleep(0.5) # Sleep a little extra to avoid double presses
+                    blanklcdline(4)
+                mb.pinHigh(opin)
+                if key == '#': break
+            time.sleep(0.05) #This is the sleep between scans of the key pad
+        if key == '#': break
+    returnval = ""
+    for i in keys:
+        returnval = returnval + i
+    returnval = Decimal(returnval)
+    return returnval
 
 def inputweight():
     ### Read in weight value.
@@ -109,8 +161,14 @@ time.sleep(0.5)          # Wait for LCD to Initialize
 oneplace = Decimal('0.0') #Decimal precision for weights
 scaleweight = Decimal('0.0')
 stopweight = Decimal('0.0')
+inputpins = [6,7,8,9]
+outputpins = [3,4,5]
+allpins = outputpins + inputpins
 
-#Display start up screen
+#Map the input and output pins to the buttons on the keypad.
+key_map = {   9:{ 5:1, 4:2, 3:3 },  8:{ 5:4, 4:5, 3:6 },  7:{ 5:7, 4:8, 3:9 },  6:{ 5:".", 4:0, 3:"#" }   }
+
+#Display start up text
 blanklcd()
 time.sleep(0.07)
 mb.lcd(1,'  Pellet Dispenser  ')
@@ -134,7 +192,10 @@ print 'Scale weight: ' + str(scaleweight) + 'oz'
 
 
 ### Read in weight value.
-stopweight = inputweight()
+#stopweight = inputweight()
+blanklcdline(3)
+mb.lcd(3,'Enter weight: ')
+stopweight = read_keypad()
 
 #Wait for start button
 waitforbutton(12,'START')

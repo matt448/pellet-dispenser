@@ -5,8 +5,15 @@
 # on matrix keypad. I am using the adafruit Membrane Matrix Keypad
 # Item ID: 419  (http://adafruit.com/products/419)
 #
+# Other key pads have different pin outs but any seven pin matrix
+# key pad should work as long as you know which pins make up the
+# columns and rows.
+#
 # Matthew McMillan
-# matthew.mcmillan@silvercar.com
+# matthew.mcmillan@gmail.com
+#
+# Thanks to Adam Levy for helping me with the key_map nested dictionary
+# 
 #
 
 import pymcu           # Import the pymcu module
@@ -15,40 +22,40 @@ from time import sleep
 
 inputpins = [6,7,8,9]
 outputpins = [3,4,5]
+allpins = outputpins + inputpins 
 
-allpins = [3,4,5,6,7,8,9]
+#Map the input and output pins to the buttons on the keypad.
+key_map = {   9:{ 5:1, 4:2, 3:3 },  8:{ 5:4, 4:5, 3:6 },  7:{ 5:7, 4:8, 3:9 },  6:{ 5:"*", 4:0, 3:"#" }   }
+
 
 mb = pymcu.mcuModule() # Initialize pymcu board - Find first available pymcu hardware module.
 
+#Set input pins to input mode
 for pin in inputpins:
     print ' IN PIN NUM: ' + str(pin)
-    mb.digitalState(pin, 'input') #Set digital pins to input mode for reading button presses
+    mb.digitalState(pin, 'input') 
 
+#Set output pins to output mode
 for pin in outputpins:
     print 'OUT PIN NUM: ' + str(pin)
-    mb.digitalState(pin, 'output') #Set digital pins to input mode for reading button presses
+    mb.digitalState(pin, 'output') 
     mb.pinHigh(pin)
 
+
 print ' '
-print 'Starting loop. Press ctrl-c to exit'
-sleep(2)
-print ' '
+print 'Starting loop to read keypad button presses.'
+print 'Press ctrl-c to exit'
+sleep(1)
+print 'Press buttons now. '
 
 while True:
     for ipin in inputpins:
         for opin in outputpins:
-            #print 'OPIN ' + str(opin) + ' GOING LOW'
             mb.pinLow(opin)
-            #print 'IPIN' + str(ipin) + ' OPIN' + str(opin) + ': '+ str(mb.digitalRead(ipin))
-            #print 'READING IPIN ' + str(ipin)
             if not mb.digitalRead(ipin):
-                print 'IPIN:' + str(ipin) + ' OPIN:' + str(opin)
+                #print 'IPIN:' + str(ipin) + ' OPIN:' + str(opin)
+                print 'KEY PRESSED: ' + str(key_map[ipin][opin])
                 print '--------------------'
                 sleep(0.5) # Sleep a little extra to avoid double presses
-                #print 'IPIN: ' + str(ipin) 
-                #print 'OPIN: ' + str(opin)
-                #print ' '
-                #sleep(1)
-            #print 'OPIN ' + str(opin) + ' GOING HIGH'
             mb.pinHigh(opin)
-    time.sleep(0.05)
+    time.sleep(0.05) #This is the sleep between scans of the key pad
