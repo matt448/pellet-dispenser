@@ -208,17 +208,23 @@ blanklcdline(3)
 blanklcdline(4)
 
 solenoid_control('activate',11)
-while Decimal(scaleweight) < Decimal(stopweight):
+while Decimal(scaleweight) < (Decimal(stopweight) - Decimal(0.1)):
     scaleweight = read_scale(scaledev)
     print "SCALE WEIGHT: " + str(scaleweight)
     print " STOP WEIGHT: " + str(stopweight)
     mb.lcd(2,'   -- FILLING --   ')
     mb.lcd(3,'SCALE: ' + str(scaleweight) + 'oz')
     mb.lcd(4,' STOP: ' + str(stopweight) + 'oz')
-    time.sleep(0.25)
+    time.sleep(0.05)
 solenoid_control('deactivate',11)
-mb.pinHigh(1) #Turn on LED light to signal finished
 mb.lcd(2,'   --  FULL   --   ')
+sleep(0.5)
+scaleweight = read_scale(scaledev)
+mb.lcd(3,'SCALE: ' + str(scaleweight) + 'oz')
+mb.pinHigh(1) #Turn on LED light to signal finished
+sleep(5)
+scaleweight = read_scale(scaledev)
+mb.lcd(3,'SCALE: ' + str(scaleweight) + 'oz')
 
 
 
