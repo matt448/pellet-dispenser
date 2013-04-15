@@ -20,15 +20,22 @@ def blanklcdline(line):
     mb.lcd(line,'                    ')   #Blank one line on the display
 
 def waitforbutton(pin,label):
-    ### Loop waits for start button to be pressed.
+    ### Loop waits for requested button to be pressed.
+    ### Returns true if requested button is pressed.
+    ### Returns false if cancel button is pressed.
     print 'Press ' + str(label)
     blanklcdline(4)
     mb.lcd(4,'    Press ' + label)
     while True:
-        if not mb.digitalRead(pin):
-            time.sleep(0.05)
-        else:
+        if mb.digitalRead(pin): #Look for requested button to be pressed
+            returnval = True
             break
+        elif mb.digitalRead(13): #Also look for cancel button to be pressed
+            returnval = False
+            break
+        else:
+            time.sleep(0.05)
+    return(returnval)
 
 def read_keypad():
     keys = []
@@ -145,11 +152,13 @@ def solenoid_control(action,pin):
     else: mb.pinLow(pin) #Not sure what you want but closing to prevent spill 
 
 def wait_for_zero_scale():
+    returnval = True
     while True:
         scaleweight = read_scale(scaledev)
         if scaleweight == Decimal(0.0):
             break
         else:
+            returnval = False
             blanklcdline(2)
             blanklcdline(3)
             blanklcdline(4)
@@ -162,8 +171,8 @@ def wait_for_zero_scale():
     blanklcdline(3)
     blanklcdline(4)
     mb.lcd(3,'    SCALE READY  ')
-    sleep(2)
-    return
+    sleep(1)
+    return(returnval)
 
 
 #Initialize the pymcu board, LCD and digital pins for buttons
@@ -215,71 +224,80 @@ blanklcdline(3)
 mb.lcd(3,'Enter weight: ')
 stopweight = read_keypad()
 
-#Wait for start button
-waitforbutton(12,'START')
+#Loop at current weight until cancel button is pressed.
+while True:
+    #Wait for start button
+    if waitforbutton(12,'START'):
+        if not wait_for_zero_scale():
+            #If scale wasn't zero when we checked then ask for start button again.
+            waitforbutton(12,'START')
+        scaleweight = read_scale(scaledev)
 
-print "SCALE WEIGHT: " + str(scaleweight)
-print " STOP WEIGHT: " + str(stopweight)
+        print "SCALE WEIGHT: " + str(scaleweight)
+        print " STOP WEIGHT: " + str(stopweight)
 
-blanklcdline(2)
-blanklcdline(3)
-blanklcdline(4)
+        blanklcdline(2)
+        blanklcdline(3)
+        blanklcdline(4)
 
-solenoid_control('activate',11)
-while Decimal(scaleweight) < (Decimal(stopweight) - Decimal(0.2)):
-    if mb.digitalRead(13):
-        #This aborts the current fill loop
-        print "User pressed cancel button"
-        mb.lcd(4,' STOP: *Cancelled*')
-        cancel = True
-        break
-    scaleweight = read_scale(scaledev)
-    print "SCALE WEIGHT: " + str(scaleweight)
-    print " STOP WEIGHT: " + str(stopweight)
-    mb.lcd(2,'   -- FILLING --   ')
-    mb.lcd(3,'SCALE: ' + str(scaleweight) + 'oz')
-    mb.lcd(4,' STOP: ' + str(stopweight) + 'oz')
-solenoid_control('deactivate',11)
-mb.lcd(2,'   --  FULL  --   ')
-sleep(0.5)
-scaleweight = read_scale(scaledev)
-mb.lcd(3,'SCALE: ' + str(scaleweight) + 'oz')
-
-#This is the fine adjustment loop. It waits for the scale to 
-#stablize and adds weight in 0.1oz increments if needed.
-if not cancel:
-    #Check to see if we hit the target. If not give
-    #the scale a few seconds to stabilize.
-    while Decimal(scaleweight) < Decimal(stopweight):
-        mb.lcd(2,'   --  UNDER  --   ')
-        mb.pinLow(1) #Turn off status LED
-        i = 0
-        while i <= 10:
-            i += 1
-            scaleweight = read_scale(scaledev)
-            mb.lcd(3,'SCALE: ' + str(scaleweight) + 'oz')
-            mb.pinToggle(1) #Flash status LED while doing final weight adjustment
-            if Decimal(scaleweight) >= Decimal(stopweight):
-                mb.lcd(2,'   --  FULL  --   ')
+        solenoid_control('activate',11)
+        while Decimal(scaleweight) < (Decimal(stopweight) - Decimal(0.2)):
+            if mb.digitalRead(13):
+                #This aborts the current fill loop
+                print "User pressed cancel button"
+                mb.lcd(4,' STOP: *Cancelled*')
+                cancel = True
                 break
-            sleep(0.25)
-        if Decimal(scaleweight) >= Decimal(stopweight):
+            scaleweight = read_scale(scaledev)
+            print "SCALE WEIGHT: " + str(scaleweight)
+            print " STOP WEIGHT: " + str(stopweight)
+            mb.lcd(2,'   -- FILLING --   ')
+            mb.lcd(3,'SCALE: ' + str(scaleweight) + 'oz')
+            mb.lcd(4,' STOP: ' + str(stopweight) + 'oz')
+        solenoid_control('deactivate',11)
+        mb.lcd(2,'   --  FULL  --   ')
+        sleep(0.5)
+        scaleweight = read_scale(scaledev)
+        mb.lcd(3,'SCALE: ' + str(scaleweight) + 'oz')
+
+        #This is the fine adjustment loop. It waits for the scale to 
+        #stablize and adds weight in 0.1oz increments if needed.
+        if not cancel:
+            #Check to see if we hit the target. If not give
+            #the scale a few seconds to stabilize.
+            while Decimal(scaleweight) < Decimal(stopweight):
+                mb.lcd(2,'   --  UNDER  --   ')
+                mb.pinLow(1) #Turn off status LED
+                i = 0
+                while i <= 10:
+                    i += 1
+                    scaleweight = read_scale(scaledev)
+                    mb.lcd(3,'SCALE: ' + str(scaleweight) + 'oz')
+                    mb.pinToggle(1) #Flash status LED while doing final weight adjustment
+                    if Decimal(scaleweight) >= Decimal(stopweight):
+                        mb.lcd(2,'   --  FULL  --   ')
+                        break
+                    sleep(0.25)
+                if Decimal(scaleweight) >= Decimal(stopweight):
+                    mb.lcd(2,'   --  FULL  --   ')
+                    break
+                elif Decimal(scaleweight) < Decimal(stopweight): 
+                    #Quickly open door to add more pellets. 0.1 seconds dumps about 0.1 oz
+                    mb.pinHigh(11)
+                    sleep(0.1)
+                    mb.pinLow(11)
+
+        mb.pinHigh(1) #Turn on status LED to signal finished
+
+        if Decimal(scaleweight) == Decimal(stopweight):
             mb.lcd(2,'   --  FULL  --   ')
-            break
-        elif Decimal(scaleweight) < Decimal(stopweight): 
-            #Quickly open door to add more pellets. 0.1 seconds dumps about 0.1 oz
-            mb.pinHigh(11)
-            sleep(0.1)
-            mb.pinLow(11)
+        elif Decimal(scaleweight) > Decimal(stopweight):
+            mb.lcd(2,'   --  OVER  --   ')
+        elif Decimal(scaleweight) < Decimal(stopweight):
+            mb.lcd(2,'   --  UNDER  --   ')
+    else: #If cancel button pressed instead of start
+        break
 
-mb.pinHigh(1) #Turn on status LED to signal finished
-
-if Decimal(scaleweight) == Decimal(stopweight):
-    mb.lcd(2,'   --  FULL  --   ')
-elif Decimal(scaleweight) > Decimal(stopweight):
-    mb.lcd(2,'   --  OVER  --   ')
-elif Decimal(scaleweight) < Decimal(stopweight):
-    mb.lcd(2,'   --  UNDER  --   ')
 
 
 mb.close() # Close out pymcu board
