@@ -152,10 +152,13 @@ def solenoid_control(action,pin):
     else: mb.pinLow(pin) #Not sure what you want but closing to prevent spill 
 
 def wait_for_zero_scale():
+    #Checks the scale to see if it is at zero and loops until it is zero.
+    #Returns true if the scale was zero on the first check.
+    #Returns false if the scale was not zero on the first check.
     returnval = True
     while True:
         scaleweight = read_scale(scaledev)
-        if scaleweight == Decimal(0.0):
+        if scaleweight == Decimal(0.0): #If scale is zero break to continue.
             break
         else:
             returnval = False
@@ -171,7 +174,7 @@ def wait_for_zero_scale():
     blanklcdline(3)
     blanklcdline(4)
     mb.lcd(3,'    SCALE READY  ')
-    sleep(1)
+    sleep(0.5)
     return(returnval)
 
 
@@ -226,6 +229,8 @@ stopweight = read_keypad()
 
 #Loop at current weight until cancel button is pressed.
 while True:
+    mb.pinLow(1) #Turn off status LED
+    cancel = False
     #Wait for start button
     if waitforbutton(12,'START'):
         if not wait_for_zero_scale():
