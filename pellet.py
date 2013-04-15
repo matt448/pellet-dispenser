@@ -159,6 +159,7 @@ mb.pinLow(2)
 time.sleep(0.5)          # Wait for LCD to Initialize
 
 #Variables
+cancel = False
 oneplace = Decimal('0.0') #Decimal precision for weights
 scaleweight = Decimal('0.0')
 stopweight = Decimal('0.0')
@@ -213,6 +214,7 @@ while Decimal(scaleweight) < (Decimal(stopweight) - Decimal(0.2)):
         #This aborts the current fill loop
         print "User pressed cancel button"
         mb.lcd(4,' STOP: *Cancelled*')
+        cancel = True
         break
     scaleweight = read_scale(scaledev)
     print "SCALE WEIGHT: " + str(scaleweight)
@@ -227,29 +229,31 @@ sleep(0.5)
 scaleweight = read_scale(scaledev)
 mb.lcd(3,'SCALE: ' + str(scaleweight) + 'oz')
 
-#Check to see if we hit the target. If not give
-#the scale a few seconds to stabilize.
-while Decimal(scaleweight) < Decimal(stopweight):
-    mb.lcd(2,'   --  UNDER  --   ')
-    mb.pinLow(1) #Turn off status LED
-    i = 0
-    while i <= 10:
-        i += 1
-        scaleweight = read_scale(scaledev)
-        mb.lcd(3,'SCALE: ' + str(scaleweight) + 'oz')
-        mb.pinToggle(1) #Flash status LED while doing final weight adjustment
+
+if not cancel:
+    #Check to see if we hit the target. If not give
+    #the scale a few seconds to stabilize.
+    while Decimal(scaleweight) < Decimal(stopweight):
+        mb.lcd(2,'   --  UNDER  --   ')
+        mb.pinLow(1) #Turn off status LED
+        i = 0
+        while i <= 10:
+            i += 1
+            scaleweight = read_scale(scaledev)
+            mb.lcd(3,'SCALE: ' + str(scaleweight) + 'oz')
+            mb.pinToggle(1) #Flash status LED while doing final weight adjustment
+            if Decimal(scaleweight) >= Decimal(stopweight):
+                mb.lcd(2,'   --  FULL  --   ')
+                break
+            sleep(0.25)
         if Decimal(scaleweight) >= Decimal(stopweight):
             mb.lcd(2,'   --  FULL  --   ')
             break
-        sleep(0.25)
-    if Decimal(scaleweight) >= Decimal(stopweight):
-        mb.lcd(2,'   --  FULL  --   ')
-        break
-    elif Decimal(scaleweight) < Decimal(stopweight): 
-        #Quickly open door to add more pellets. 0.1 seconds dumps about 0.1 oz
-        mb.pinHigh(11)
-        sleep(0.1)
-        mb.pinLow(11)
+        elif Decimal(scaleweight) < Decimal(stopweight): 
+            #Quickly open door to add more pellets. 0.1 seconds dumps about 0.1 oz
+            mb.pinHigh(11)
+            sleep(0.1)
+            mb.pinLow(11)
 
 mb.pinHigh(1) #Turn on status LED to signal finished
 
