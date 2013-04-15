@@ -45,6 +45,23 @@ def read_keypad():
         for ipin in inputpins:
             for opin in outputpins:
                 mb.pinLow(opin)
+                if mb.digitalRead(13): #Red button is used here to delete entered characters
+                    print 'User pressed the red button.'
+                    print keys
+                    if len(keys) > 0: # Make sure there are chars to delete before trying.
+                        print 'Deleting last character.'
+                        popped = keys.pop()
+                        print 'POPPED VAL: >' + str(popped) + '<'
+                        if popped == '.':  #Check to see if char is a decimal so we can reset maxkeys
+                            maxkeys = 0
+                        print keys
+                        dispval = '' #Blank out display output var
+                        for i in keys:  #Generate output for LCD display
+                            dispval = dispval + i
+                            print 'DISPVAL: >' + str(dispval) + '<'
+                        blanklcdline(3)
+                        mb.lcd(3,'Enter weight: ' + str(dispval))  # Reprint the LCD after removing char
+                        sleep(0.5) #Sleep a little bit to avoid double button presses
                 if not mb.digitalRead(ipin): # This means a key was pressed
                     key = str(key_map[ipin][opin])
                     print 'KEY PRESSED: ' + str(key_map[ipin][opin])
@@ -55,7 +72,7 @@ def read_keypad():
                         if maxkeys == 0: #This prevents multiple decimal points
                             keys.append(str(key))
                             maxkeys = len(keys) + 1
-                            dispval = ""
+                            dispval = ''
                             for i in keys:
                                 dispval = dispval + i
                             mb.lcd(3,'Enter weight: ' + str(dispval))
@@ -74,7 +91,7 @@ def read_keypad():
                         for i in keys:
                             dispval = dispval + i
                         mb.lcd(3,'Enter weight: ' + str(dispval))
-                    sleep(0.5) # Sleep a little extra to avoid double presses
+                    sleep(0.5) # Sleep a little to avoid double button presses
                     blanklcdline(4)
                 mb.pinHigh(opin)
                 if key == '#': break
@@ -222,14 +239,14 @@ while Decimal(scaleweight) < (Decimal(stopweight) - Decimal(0.2)):
     mb.lcd(2,'   -- FILLING --   ')
     mb.lcd(3,'SCALE: ' + str(scaleweight) + 'oz')
     mb.lcd(4,' STOP: ' + str(stopweight) + 'oz')
-    #time.sleep(0.05)
 solenoid_control('deactivate',11)
 mb.lcd(2,'   --  FULL  --   ')
 sleep(0.5)
 scaleweight = read_scale(scaledev)
 mb.lcd(3,'SCALE: ' + str(scaleweight) + 'oz')
 
-
+#This is the fine adjustment loop. It waits for the scale to 
+#stablize and adds weight in 0.1oz increments if needed.
 if not cancel:
     #Check to see if we hit the target. If not give
     #the scale a few seconds to stabilize.
