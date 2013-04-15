@@ -69,7 +69,7 @@ def read_keypad():
                         print '# key pressed. Exiting key reading loop'
                         break
                     elif key == '.':
-                        if maxkeys == 0: #This prevents multiple decimal points
+                        if maxkeys == 0 and len(keys) < 3: #This prevents multiple decimal points
                             keys.append(str(key))
                             maxkeys = len(keys) + 1
                             dispval = ''
@@ -82,7 +82,7 @@ def read_keypad():
                         print 'User entered decimal point. Only allowing one more char.'
                         print 'maxkeys: ' + str(maxkeys)
                     else:
-                        if (maxkeys == 0) or (len(keys) < maxkeys):
+                        if ((maxkeys == 0) or (len(keys) < maxkeys)) and (len(keys) < 4) :
                             keys.append(str(key))
                         else:
                             print 'Not allowing any more characters'
