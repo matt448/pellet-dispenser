@@ -314,18 +314,24 @@ def fill_bucket():
 
 def shutdown():
     # This function is used to confirm system shutdown
+    returnval = ''
     blanklcdline(2)
     blanklcdline(3)
     blanklcdline(4)
     mb.lcd(2, 'Shutdown?')
     mb.lcd(3, 'YES: Green button')
     mb.lcd(4, ' NO: Red button')
-    if mb.digitalRead(13):
-        print 'User pressed the red button. Not shutting down'
-        return False
-    elif mb.digitalRead(12):
-        print 'User pressed the green button. Going ahead with shutdown'
-        return True
+    while True:
+        # Wait for a red or green button to be pressed
+        if mb.digitalRead(13):
+            print 'User pressed the red button. Not shutting down'
+            returnval = False
+            break
+        elif mb.digitalRead(12):
+            print 'User pressed the green button. Going ahead with shutdown'
+            returnval = True
+            break
+    return returnval
 
 
 # Initialize the pymcu board, LCD and digital pins for buttons
