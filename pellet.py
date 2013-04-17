@@ -43,7 +43,7 @@ def waitforbutton(pin, label):
 
 def read_keypad():
     keys = []
-    key = ""
+    key = ''
     maxkeys = 0
     #Set input pins to input mode
     for pin in inputpins:
@@ -82,6 +82,7 @@ def read_keypad():
                             break
                         else:
                             print '# key pressed but no weight values entered. Continuing.'
+                            key = ''
                     elif key == '.':
                         if maxkeys == 0 and len(keys) < 3:  # This prevents multiple decimal points
                             keys.append(str(key))
