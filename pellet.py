@@ -135,15 +135,19 @@ def read_keypad_mainmenu():
                     print 'KEY PRESSED: ' + str(key_map[ipin][opin])
                     if key == '1':
                         returnval = 1
+                        sleep(0.5)  # Sleep a little bit to avoid double button presses
                         break
                     elif key == '2':
                         returnval = 2
+                        sleep(0.5)  # Sleep a little bit to avoid double button presses
                         break
                     elif key == '3':
                         returnval = 3
+                        sleep(0.5)  # Sleep a little bit to avoid double button presses
                         break
                     else:
                         print 'Invaild option ' + str(key)
+                        sleep(0.5)  # Sleep a little bit to avoid double button presses
                 mb.pinHigh(opin)
         if key == '1' or key == '2' or key == '3':
             break
@@ -225,7 +229,9 @@ def wait_for_zero_scale():
 def fill_bucket():
     ### Read in weight value.
     #stopweight = inputweight()
+    blanklcdline(2)
     blanklcdline(3)
+    blanklcdline(4)
     mb.lcd(3, 'Enter weight: ')
     stopweight = read_keypad()
 
@@ -366,11 +372,6 @@ while True:
     elif menuoption == 3:
         #This will shutdown the system
         print 'Menu option 3 pressed'
-
-
-mb.close()  # Close out pymcu board
-
-
-
-
-
+        mb.close()  # Close out pymcu board
+        print 'Add shutdown command here'
+        break
