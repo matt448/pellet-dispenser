@@ -82,6 +82,7 @@ def read_keypad():
                             break
                         else:
                             print '# key pressed but no weight values entered. Continuing.'
+                            key = ''
                     elif key == '.':
                         if maxkeys == 0 and len(keys) < 3:  # This prevents multiple decimal points
                             keys.append(str(key))
