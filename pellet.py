@@ -76,7 +76,7 @@ def read_keypad():
                 if not mb.digitalRead(ipin):  # This means a key was pressed
                     key = str(key_map[ipin][opin])
                     print 'KEY PRESSED: ' + str(key_map[ipin][opin])
-                    if key == '#':
+                    if key == '#' and len(keys) > 0:
                         print '# key pressed. Exiting key reading loop'
                         break
                     elif key == '.':
