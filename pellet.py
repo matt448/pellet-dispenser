@@ -117,6 +117,39 @@ def read_keypad():
     return returnval
 
 
+def read_keypad_mainmenu():
+    key = ''
+    #Set input pins to input mode
+    for pin in inputpins:
+        mb.digitalState(pin, 'input')
+        #Set output pins to output mode
+    for pin in outputpins:
+        mb.digitalState(pin, 'output')
+        mb.pinHigh(pin)
+    while True:
+        for ipin in inputpins:
+            for opin in outputpins:
+                mb.pinLow(opin)
+                if not mb.digitalRead(ipin):  # This means a key was pressed
+                    key = str(key_map[ipin][opin])
+                    print 'KEY PRESSED: ' + str(key_map[ipin][opin])
+                    if key == '1':
+                        returnval = 1
+                        break
+                    elif key == '2':
+                        returnval = 2
+                        break
+                    elif key == '3':
+                        returnval = 3
+                        break
+                    else:
+                        print 'Invaild option ' + str(key)
+                mb.pinHigh(opin)
+        if key == '1' or key == '2' or key == '3':
+            break
+    return returnval
+
+
 def inputweight():
     ### Read in weight value.
     ### For now this can read in from keyboard.
@@ -316,25 +349,23 @@ scaleweight = read_scale(scaledev)
 print 'Scale weight: ' + str(scaleweight) + 'oz'
 
 # Main menu
+while True:
+    blanklcdline(2)
+    blanklcdline(3)
+    blanklcdline(4)
 
-blanklcdline(2)
-blanklcdline(3)
-blanklcdline(4)
+    mb.lcd(2, '1. Enter weight    ')
+    mb.lcd(3, '2. Calculate weight')
+    mb.lcd(4, '3. Shutdown        ')
 
-mb.lcd(2, '1. Enter weight    ')
-mb.lcd(3, '2. Calculate weight')
-mb.lcd(4, '3. Shutdown        ')
-
-sleep(2)
-fill_bucket()
-
-blanklcdline(2)
-blanklcdline(3)
-blanklcdline(4)
-
-mb.lcd(2, '1. Enter weight    ')
-mb.lcd(3, '2. Calculate weight')
-mb.lcd(4, '3. Shutdown        ')
+    menuoption = read_keypad_mainmenu()
+    if menuoption == 1:
+        fill_bucket()
+    elif menuoption == 2:
+        print 'Menu option 2 pressed'
+    elif menuoption == 3:
+        #This will shutdown the system
+        print 'Menu option 3 pressed'
 
 
 mb.close()  # Close out pymcu board
