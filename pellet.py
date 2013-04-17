@@ -19,7 +19,7 @@ def blanklcd():
 
 
 def blanklcdline(line):
-    mb.lcd(line, '                    ')   #Blank one line on the display
+    mb.lcd(line, '                    ')   # Blank one line on the display
 
 
 def waitforbutton(pin, label):
@@ -30,10 +30,10 @@ def waitforbutton(pin, label):
     blanklcdline(4)
     mb.lcd(4, '    Press ' + label)
     while True:
-        if mb.digitalRead(pin): #Look for requested button to be pressed
+        if mb.digitalRead(pin):  # Look for requested button to be pressed
             returnval = True
             break
-        elif mb.digitalRead(13): #Also look for cancel button to be pressed
+        elif mb.digitalRead(13):  # Also look for cancel button to be pressed
             returnval = False
             break
         else:
@@ -56,17 +56,17 @@ def read_keypad():
         for ipin in inputpins:
             for opin in outputpins:
                 mb.pinLow(opin)
-                if mb.digitalRead(13): # Red button is used here to delete entered characters
+                if mb.digitalRead(13):  # Red button is used here to delete entered characters
                     print 'User pressed the red button.'
                     print keys
-                    if len(keys) > 0: # Make sure there are chars to delete before trying.
+                    if len(keys) > 0:  # Make sure there are chars to delete before trying.
                         print 'Deleting last character.'
                         popped = keys.pop()
                         print 'POPPED VAL: >' + str(popped) + '<'
                         if popped == '.':  # Check to see if char is a decimal so we can reset maxkeys
                             maxkeys = 0
                         print keys
-                        dispval = '' # Blank out display output var
+                        dispval = ''  # Blank out display output var
                         for i in keys:  # Generate output for LCD display
                             dispval = dispval + i
                             print 'DISPVAL: >' + str(dispval) + '<'
@@ -189,6 +189,90 @@ def wait_for_zero_scale():
     return(returnval)
 
 
+def fill_bucket():
+    ### Read in weight value.
+    #stopweight = inputweight()
+    blanklcdline(3)
+    mb.lcd(3, 'Enter weight: ')
+    stopweight = read_keypad()
+
+    #Loop at current weight until cancel button is pressed.
+    while True:
+        mb.pinLow(1)  # Turn off status LED
+        cancel = False
+        #Wait for start button
+        if waitforbutton(12, 'START'):
+            if not wait_for_zero_scale():
+                #If scale wasn't zero when we checked then ask for start button again.
+                waitforbutton(12, 'START')
+            scaleweight = read_scale(scaledev)
+
+            print "SCALE WEIGHT: " + str(scaleweight)
+            print " STOP WEIGHT: " + str(stopweight)
+
+            blanklcdline(2)
+            blanklcdline(3)
+            blanklcdline(4)
+
+            solenoid_control('activate', 11)
+            while Decimal(scaleweight) < (Decimal(stopweight) - Decimal(0.2)):
+                if mb.digitalRead(13):
+                    #This aborts the current fill loop
+                    print "User pressed cancel button"
+                    mb.lcd(4, ' STOP: *Cancelled*')
+                    cancel = True
+                    break
+                scaleweight = read_scale(scaledev)
+                print "SCALE WEIGHT: " + str(scaleweight)
+                print " STOP WEIGHT: " + str(stopweight)
+                mb.lcd(2, '   -- FILLING --   ')
+                mb.lcd(3, 'SCALE: ' + str(scaleweight) + 'oz')
+                mb.lcd(4, ' STOP: ' + str(stopweight) + 'oz')
+            solenoid_control('deactivate', 11)
+            mb.lcd(2, '   --  FULL  --   ')
+            sleep(0.5)
+            scaleweight = read_scale(scaledev)
+            mb.lcd(3, 'SCALE: ' + str(scaleweight) + 'oz')
+
+            #This is the fine adjustment loop. It waits for the scale to
+            #stablize and adds weight in 0.1oz increments if needed.
+            if not cancel:
+                #Check to see if we hit the target. If not give
+                #the scale a few seconds to stabilize.
+                while Decimal(scaleweight) < Decimal(stopweight):
+                    mb.lcd(2, '   --  UNDER  --   ')
+                    mb.pinLow(1)  # Turn off status LED
+                    i = 0
+                    while i <= 10:
+                        i += 1
+                        scaleweight = read_scale(scaledev)
+                        mb.lcd(3, 'SCALE: ' + str(scaleweight) + 'oz')
+                        mb.pinToggle(1)  # Flash status LED while doing final weight adjustment
+                        if Decimal(scaleweight) >= Decimal(stopweight):
+                            mb.lcd(2, '   --  FULL  --   ')
+                            break
+                        sleep(0.25)
+                    if Decimal(scaleweight) >= Decimal(stopweight):
+                        mb.lcd(2, '   --  FULL  --   ')
+                        break
+                    elif Decimal(scaleweight) < Decimal(stopweight):
+                    # Quickly open door to add more pellets. 0.1 seconds dumps about 0.1 oz
+                        mb.pinHigh(11)
+                        sleep(0.1)
+                        mb.pinLow(11)
+
+            mb.pinHigh(1)  # Turn on status LED to signal finished
+
+            if Decimal(scaleweight) == Decimal(stopweight):
+                mb.lcd(2, '   --  FULL  --   ')
+            elif Decimal(scaleweight) > Decimal(stopweight):
+                mb.lcd(2, '   --  OVER  --   ')
+            elif Decimal(scaleweight) < Decimal(stopweight):
+                mb.lcd(2, '   --  UNDER  --   ')
+        else:  # If cancel button pressed instead of start
+            break
+
+
 # Initialize the pymcu board, LCD and digital pins for buttons
 mb = pymcu.mcuModule()  # Initialize pymcu board - Find first available pymcu hardware module.
 mb.digitalState(12, 'input')  # Set digital pins to input mode for reading button presses
@@ -231,88 +315,26 @@ wait_for_zero_scale()
 scaleweight = read_scale(scaledev)
 print 'Scale weight: ' + str(scaleweight) + 'oz'
 
+# Main menu
 
-### Read in weight value.
-#stopweight = inputweight()
+blanklcdline(2)
 blanklcdline(3)
-mb.lcd(3, 'Enter weight: ')
-stopweight = read_keypad()
+blanklcdline(4)
 
-#Loop at current weight until cancel button is pressed.
-while True:
-    mb.pinLow(1)  # Turn off status LED
-    cancel = False
-    #Wait for start button
-    if waitforbutton(12, 'START'):
-        if not wait_for_zero_scale():
-            #If scale wasn't zero when we checked then ask for start button again.
-            waitforbutton(12, 'START')
-        scaleweight = read_scale(scaledev)
+mb.lcd(2, '1. Enter weight    ')
+mb.lcd(3, '2. Calculate weight')
+mb.lcd(4, '3. Shutdown        ')
 
-        print "SCALE WEIGHT: " + str(scaleweight)
-        print " STOP WEIGHT: " + str(stopweight)
+sleep(2)
+fill_bucket()
 
-        blanklcdline(2)
-        blanklcdline(3)
-        blanklcdline(4)
+blanklcdline(2)
+blanklcdline(3)
+blanklcdline(4)
 
-        solenoid_control('activate', 11)
-        while Decimal(scaleweight) < (Decimal(stopweight) - Decimal(0.2)):
-            if mb.digitalRead(13):
-                #This aborts the current fill loop
-                print "User pressed cancel button"
-                mb.lcd(4, ' STOP: *Cancelled*')
-                cancel = True
-                break
-            scaleweight = read_scale(scaledev)
-            print "SCALE WEIGHT: " + str(scaleweight)
-            print " STOP WEIGHT: " + str(stopweight)
-            mb.lcd(2, '   -- FILLING --   ')
-            mb.lcd(3, 'SCALE: ' + str(scaleweight) + 'oz')
-            mb.lcd(4, ' STOP: ' + str(stopweight) + 'oz')
-        solenoid_control('deactivate', 11)
-        mb.lcd(2, '   --  FULL  --   ')
-        sleep(0.5)
-        scaleweight = read_scale(scaledev)
-        mb.lcd(3, 'SCALE: ' + str(scaleweight) + 'oz')
-
-        #This is the fine adjustment loop. It waits for the scale to 
-        #stablize and adds weight in 0.1oz increments if needed.
-        if not cancel:
-            #Check to see if we hit the target. If not give
-            #the scale a few seconds to stabilize.
-            while Decimal(scaleweight) < Decimal(stopweight):
-                mb.lcd(2, '   --  UNDER  --   ')
-                mb.pinLow(1)  # Turn off status LED
-                i = 0
-                while i <= 10:
-                    i += 1
-                    scaleweight = read_scale(scaledev)
-                    mb.lcd(3, 'SCALE: ' + str(scaleweight) + 'oz')
-                    mb.pinToggle(1)  # Flash status LED while doing final weight adjustment
-                    if Decimal(scaleweight) >= Decimal(stopweight):
-                        mb.lcd(2, '   --  FULL  --   ')
-                        break
-                    sleep(0.25)
-                if Decimal(scaleweight) >= Decimal(stopweight):
-                    mb.lcd(2, '   --  FULL  --   ')
-                    break
-                elif Decimal(scaleweight) < Decimal(stopweight): 
-                    # Quickly open door to add more pellets. 0.1 seconds dumps about 0.1 oz
-                    mb.pinHigh(11)
-                    sleep(0.1)
-                    mb.pinLow(11)
-
-        mb.pinHigh(1)  # Turn on status LED to signal finished
-
-        if Decimal(scaleweight) == Decimal(stopweight):
-            mb.lcd(2, '   --  FULL  --   ')
-        elif Decimal(scaleweight) > Decimal(stopweight):
-            mb.lcd(2, '   --  OVER  --   ')
-        elif Decimal(scaleweight) < Decimal(stopweight):
-            mb.lcd(2, '   --  UNDER  --   ')
-    else:  # If cancel button pressed instead of start
-        break
+mb.lcd(2, '1. Enter weight    ')
+mb.lcd(3, '2. Calculate weight')
+mb.lcd(4, '3. Shutdown        ')
 
 
 mb.close()  # Close out pymcu board
