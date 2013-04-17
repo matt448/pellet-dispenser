@@ -76,9 +76,12 @@ def read_keypad():
                 if not mb.digitalRead(ipin):  # This means a key was pressed
                     key = str(key_map[ipin][opin])
                     print 'KEY PRESSED: ' + str(key_map[ipin][opin])
-                    if key == '#' and len(keys) > 0:
-                        print '# key pressed. Exiting key reading loop'
-                        break
+                    if key == '#':
+                        if len(keys) > 0:
+                            print '# key pressed. Exiting key reading loop.'
+                            break
+                        else:
+                            print '# key pressed but no weight values entered. Continuing.'
                     elif key == '.':
                         if maxkeys == 0 and len(keys) < 3:  # This prevents multiple decimal points
                             keys.append(str(key))
