@@ -72,7 +72,7 @@ def read_keypad():
                             print 'DISPVAL: >' + str(dispval) + '<'
                         blanklcdline(3)
                         mb.lcd(3, 'Enter weight: ' + str(dispval))  # Reprint the LCD after removing char
-                        sleep(0.5)  # Sleep a little bit to avoid double button presses
+                    sleep(0.5)  # Sleep a little bit to avoid double button presses
                 if not mb.digitalRead(ipin):  # This means a key was pressed
                     key = str(key_map[ipin][opin])
                     print 'KEY PRESSED: ' + str(key_map[ipin][opin])
@@ -312,6 +312,22 @@ def fill_bucket():
             break
 
 
+def shutdown():
+    # This function is used to confirm system shutdown
+    blanklcdline(2)
+    blanklcdline(3)
+    blanklcdline(4)
+    mb.lcd(2, 'Shutdown?')
+    mb.lcd(3, 'YES: Green button')
+    mb.lcd(4, ' NO: Red button')
+    if mb.digitalRead(13):
+        print 'User pressed the red button. Not shutting down'
+        return False
+    elif mb.digitalRead(12):
+        print 'User pressed the green button. Going ahead with shutdown'
+        return True
+
+
 # Initialize the pymcu board, LCD and digital pins for buttons
 mb = pymcu.mcuModule()  # Initialize pymcu board - Find first available pymcu hardware module.
 mb.digitalState(12, 'input')  # Set digital pins to input mode for reading button presses
@@ -365,17 +381,20 @@ while True:
     mb.lcd(4, '3. Shutdown        ')
 
     menuoption = read_keypad_mainmenu()
+
     if menuoption == 1:
         fill_bucket()
     elif menuoption == 2:
         print 'Menu option 2 pressed'
+        print 'Need to add calc function'
     elif menuoption == 3:
         #This will shutdown the system
         print 'Menu option 3 pressed'
-        blanklcdline(2)
-        blanklcdline(3)
-        blanklcdline(4)
-        mb.lcd(3, ' -- SHUTTING DOWN -- ')
-        mb.close()  # Close out pymcu board
-        print 'Add shutdown command here'
-        break
+        if shutdown():
+            blanklcdline(2)
+            blanklcdline(3)
+            blanklcdline(4)
+            mb.lcd(3, ' -- SHUTTING DOWN -- ')
+            mb.close()  # Close out pymcu board
+            print 'Add linux shutdown command here'
+            break
