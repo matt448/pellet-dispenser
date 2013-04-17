@@ -372,6 +372,10 @@ while True:
     elif menuoption == 3:
         #This will shutdown the system
         print 'Menu option 3 pressed'
+        blanklcdline(2)
+        blanklcdline(3)
+        blanklcdline(4)
+        mb.lcd(3, ' -- SHUTTING DOWN -- ')
         mb.close()  # Close out pymcu board
         print 'Add shutdown command here'
         break
