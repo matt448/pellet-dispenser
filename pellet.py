@@ -238,10 +238,32 @@ def calc_weight():
     totalweightlbs = read_keypad(3, 'Total lbs: ')
     totalweightoz = Decimal(totalweightlbs) * 16
     print "TOTAL WEIGHT OZ: " + str(totalweightoz)
+    while totalweightoz == 0:
+        blanklcdline(3)
+        blanklcdline(4)
+        mb.lcd(3, 'Weight can\'t be 0')
+        mb.lcd(4, '     ERROR         ')
+        sleep(2)
+        blanklcdline(3)
+        blanklcdline(4)
+        mb.lcd(3, 'Total lbs: ')
+        totalweightlbs = read_keypad(3, 'Total lbs: ')
+        totalweightoz = Decimal(totalweightlbs) * 16
+        print "TOTAL WEIGHT OZ: " + str(totalweightoz)
     blanklcdline(3)
     mb.lcd(3, 'Num pockets: ')
     numpockets = read_keypad(3, 'Num pockets: ')
     print "NUM POCKETS: " + str(numpockets)
+    while numpockets == 0:
+        blanklcdline(3)
+        blanklcdline(4)
+        mb.lcd(3, 'Pockets can\'t be 0')
+        mb.lcd(4, '     ERROR         ')
+        sleep(2)
+        blanklcdline(3)
+        blanklcdline(4)
+        mb.lcd(3, 'Num pockets: ')
+        numpockets = read_keypad(3, 'Num pockets: ')
     pocketweightoz = totalweightoz / numpockets
     pocketweightoz = Decimal(pocketweightoz).quantize(oneplace)
     print "CALC WEIGHT: " + str(pocketweightoz)
