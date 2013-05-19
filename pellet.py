@@ -41,7 +41,7 @@ def waitforbutton(pin, label):
     return(returnval)
 
 
-def read_keypad():
+def read_keypad(linenum, dispmsg):
     keys = []
     key = ''
     maxkeys = 0
@@ -70,8 +70,8 @@ def read_keypad():
                         for i in keys:  # Generate output for LCD display
                             dispval = dispval + i
                             print 'DISPVAL: >' + str(dispval) + '<'
-                        blanklcdline(3)
-                        mb.lcd(3, 'Enter weight: ' + str(dispval))  # Reprint the LCD after removing char
+                        blanklcdline(linenum)
+                        mb.lcd(linenum, str(dispmsg) + str(dispval))  # Reprint the LCD after removing char
                     sleep(0.5)  # Sleep a little bit to avoid double button presses
                 if not mb.digitalRead(ipin):  # This means a key was pressed
                     key = str(key_map[ipin][opin])
@@ -90,7 +90,7 @@ def read_keypad():
                             dispval = ''
                             for i in keys:
                                 dispval = dispval + i
-                            mb.lcd(3,'Enter weight: ' + str(dispval))
+                            mb.lcd(linenum, str(dispmsg) + str(dispval))
                         else:
                             print 'Not allowing extra decimal points.'
                             mb.lcd(4, '       ERROR')
@@ -105,7 +105,7 @@ def read_keypad():
                         dispval = ""
                         for i in keys:
                             dispval = dispval + i
-                        mb.lcd(3, 'Enter weight: ' + str(dispval))
+                        mb.lcd(linenum, str(dispmsg) + str(dispval))
                     sleep(0.5)  # Sleep a little to avoid double button presses
                     blanklcdline(4)
                 mb.pinHigh(opin)
@@ -230,14 +230,36 @@ def wait_for_zero_scale():
     return(returnval)
 
 
-def fill_bucket():
-    ### Read in weight value.
-    #stopweight = inputweight()
+def calc_weight():
     blanklcdline(2)
     blanklcdline(3)
     blanklcdline(4)
-    mb.lcd(3, 'Enter weight: ')
-    stopweight = read_keypad()
+    mb.lcd(3, 'Total lbs: ')
+    totalweightlbs = read_keypad(3, 'Total lbs: ')
+    totalweightoz = Decimal(totalweightlbs) * 16
+    print "TOTAL WEIGHT OZ: " + str(totalweightoz)
+    blanklcdline(3)
+    mb.lcd(3, 'Num pockets: ')
+    numpockets = read_keypad(3, 'Num pockets: ')
+    print "NUM POCKETS: " + str(numpockets)
+    pocketweightoz = totalweightoz / numpockets
+    pocketweightoz = Decimal(pocketweightoz).quantize(oneplace)
+    print "CALC WEIGHT: " + str(pocketweightoz)
+    fill_bucket(pocketweightoz)
+
+def fill_bucket(stopweight):  #Pass in zero for stopweight to read from keypad
+    Decimal(stopweight)
+    print "STOP WEIGHT: " + str(stopweight)
+    ### Read in weight value from keypad if zero was passed in as stopweight
+    if stopweight == 0:
+        blanklcdline(2)
+        blanklcdline(3)
+        blanklcdline(4)
+        mb.lcd(3, 'Enter weight: ')
+        stopweight = read_keypad(3, 'Enter weight: ')
+    else:
+        blanklcdline(3)
+        mb.lcd(3, 'Calc weight: ' + str(stopweight) + ' oz')
 
     #Loop at current weight until cancel button is pressed.
     while True:
@@ -393,10 +415,11 @@ while True:
     menuoption = read_keypad_mainmenu()
 
     if menuoption == 1:
-        fill_bucket()
+        fill_bucket(0)
     elif menuoption == 2:
-        print 'Menu option 2 pressed'
-        print 'Need to add calc function'
+        calc_weight()
+        #print 'Menu option 2 pressed'
+        #print 'Need to add calc function'
     elif menuoption == 3:
         #This will shutdown the system
         print 'Menu option 3 pressed'
@@ -406,5 +429,6 @@ while True:
             blanklcdline(4)
             mb.lcd(3, ' -- SHUTTING DOWN -- ')
             mb.close()  # Close out pymcu board
-            print 'Add linux shutdown command here'
+            print 'Starting linux shutdown'
+            os.system('shutdown -h now')
             break
