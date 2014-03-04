@@ -1,5 +1,17 @@
 #!/usr/bin/python
 
+#########################################
+# Notes
+#########################################
+#
+# Written by Matthew McMillan
+# matthew.mcmillan@gmail.com
+# @matthewmcmillan
+# https://matthewcmcmillan.blogspot.com
+# https://github.com/matt448/pellet-dispenser
+#
+
+
 import pymcu           # Import the pymcu module
 import time            # Import time module for sleep functions
 from time import sleep
@@ -8,7 +20,20 @@ import subprocess
 from decimal import Decimal
 from subprocess import check_output
 
+
+##########################################
 # Functions
+
+#TO-DO
+# Add a manual_feed function that dispenses pellets while the
+# green button is held down. Pressing the red button cancels 
+# back to the main menu.
+
+
+#TO-DO
+# Add a spin_auger function that turns the stepper motor.
+# Have ability to pass in the number of steps to turn the
+# motor.
 
 
 def blanklcd():
@@ -433,6 +458,13 @@ while True:
     mb.lcd(2, '1. Enter weight    ')
     mb.lcd(3, '2. Calculate weight')
     mb.lcd(4, '3. Shutdown        ')
+    
+    #TO-DO
+    # - Add a second page to the menu that adds '4. Manual feed'
+    # - Move '3. Shutdown' to second menu_page.
+    # - Make first menu page only two items with '*' to move to next page.
+    # - Add ability to read * button press and increment a menu_page counter.
+    # - The menu_page counter will be used to determine what menu_page to display.
 
     menuoption = read_keypad_mainmenu()
 
@@ -440,8 +472,6 @@ while True:
         fill_bucket(0)
     elif menuoption == 2:
         calc_weight()
-        #print 'Menu option 2 pressed'
-        #print 'Need to add calc function'
     elif menuoption == 3:
         #This will shutdown the system
         print 'Menu option 3 pressed'
