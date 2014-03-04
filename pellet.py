@@ -465,6 +465,7 @@ while True:
     # - Make first menu page only two items with '*' to move to next page.
     # - Add ability to read * button press and increment a menu_page counter.
     # - The menu_page counter will be used to determine what menu_page to display.
+    # - Create a display_main_menu function to display menus. Pass in menu_page counter. 
 
     menuoption = read_keypad_mainmenu()
 
