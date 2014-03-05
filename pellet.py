@@ -29,13 +29,19 @@ from subprocess import check_output
 # green button is held down. Pressing the red button cancels 
 # back to the main menu.
 def manual_feed():
+    blanklcdline(2)
+    blanklcdline(3)
+    blanklcdline(4)
     while True:
-        if mb.digitalRead(greenpin)  #while green button pressed
+        if mb.digitalRead(greenpin):  #while green button pressed
             print 'Green button pressed'
             print 'Need to spin the auger here'
-        if mb.digitalRead(redpin)
+            mb.pulseOut(2,5,10)
+        elif mb.digitalRead(redpin):
             print 'Red button pressed'
             break
+        else:
+            time.sleep(0.05)
     return
 
 #TO-DO
@@ -419,6 +425,10 @@ def shutdown():
 mb = pymcu.mcuModule()  # Initialize pymcu board - Find first available pymcu hardware module.
 mb.digitalState(12, 'input')  # Set digital pins to input mode for reading button presses
 mb.digitalState(13, 'input')  # Set digital pins to input mode for reading button presses
+mb.digitalState(2, 'output')  # Set digital pins for stepper motor
+mb.digitalState(10, 'output')  # Set digital pins for stepper motor
+mb.pinLow(2) # Set starting state for stepper motor pin
+mb.pinLow(10) # Set starting state for stepper motor pin
 mb.lcd()               # Initialize the LCD
 mb.pinLow(1)           # Make sure LED's are turned off
 mb.pinLow(2)
@@ -432,6 +442,8 @@ stopweight = Decimal('0.0')
 inputpins = [6, 7, 8, 9]
 outputpins = [3, 4, 5]
 allpins = outputpins + inputpins
+redpin = 13
+greenpin = 12
 
 # Map the input and output pins to the buttons on the keypad.
 key_map = {9: {5: 1, 4: 2, 3: 3},  8: {5: 4, 4: 5, 3: 6},  7: {5: 7, 4: 8, 3: 9},  6: {5: ".", 4: 0, 3: "#"}}
@@ -464,7 +476,8 @@ while True:
     blanklcdline(4)
 
     mb.lcd(2, '1. Enter weight    ')
-    mb.lcd(3, '2. Calculate weight')
+    #mb.lcd(3, '2. Calculate weight')
+    mb.lcd(3, '2. Manual feed')
     mb.lcd(4, '3. Shutdown        ')
     
     #TO-DO
@@ -480,7 +493,8 @@ while True:
     if menuoption == 1:
         fill_bucket(0)
     elif menuoption == 2:
-        calc_weight()
+        #calc_weight()
+        manual_feed()
     elif menuoption == 3:
         #This will shutdown the system
         print 'Menu option 3 pressed'
