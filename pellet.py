@@ -28,7 +28,15 @@ from subprocess import check_output
 # Add a manual_feed function that dispenses pellets while the
 # green button is held down. Pressing the red button cancels 
 # back to the main menu.
-
+def manual_feed():
+    while True:
+        if mb.digitalRead(greenpin)  #while green button pressed
+            print 'Green button pressed'
+            print 'Need to spin the auger here'
+        if mb.digitalRead(redpin)
+            print 'Red button pressed'
+            break
+    return
 
 #TO-DO
 # Add a spin_auger function that turns the stepper motor.
