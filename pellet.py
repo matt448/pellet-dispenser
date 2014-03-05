@@ -32,16 +32,26 @@ def manual_feed():
     blanklcdline(2)
     blanklcdline(3)
     blanklcdline(4)
+    feedcount = 0
     while True:
+        if feedcount >= 10:
+            mb.pinToggle(10)  #Switch feed direction
+            print 'Switching feed direction'
+            feedcount = 0
         if mb.digitalRead(greenpin):  #while green button pressed
+            mb.lcd(3, '      Feeding    ')
             print 'Green button pressed'
-            print 'Need to spin the auger here'
-            mb.pulseOut(2,5,10)
+            mb.pulseOut(2,1,50)
+            feedcount += 1
         elif mb.digitalRead(redpin):
+            blanklcdline(3)
+            mb.lcd(3, '  Exit manual feed  ')
             print 'Red button pressed'
+            time.sleep(0.50)
             break
         else:
-            time.sleep(0.05)
+            #time.sleep(0.05)
+            blanklcdline(3)
     return
 
 #TO-DO
